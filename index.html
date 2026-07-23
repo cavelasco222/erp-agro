@@ -603,7 +603,7 @@ tbody tr:hover td{background:#F7F9FB}
 const CONFIG = {
   SHEET_ID: '1ShA4GJ5FZOnVsyKDl62Ch4x5Wx29R0p-TOjq0s5REe4',
   SCRIPT_URL: localStorage.getItem('erp_script_url') || '',
-  GOOGLE_CLIENT_ID: localStorage.getItem('erp_google_client_id') || '',
+  GOOGLE_CLIENT_ID: localStorage.getItem('erp_google_client_id') || '408945589313-30l5c8kksblvnh7kqvptm9c5oaf56oso.apps.googleusercontent.com',
 };
 
 // Mapeo tablas
@@ -693,6 +693,18 @@ async function matchUser(email, name) {
 
 // ── GOOGLE SHEETS API ─────────────────────────────────────
 async function fetchSheetRaw(sheetName) {
+  // Si hay Apps Script configurado, usarlo (permite hoja privada)
+  if (CONFIG.SCRIPT_URL) {
+    try {
+      const url = `${CONFIG.SCRIPT_URL}?action=read&sheet=${encodeURIComponent(sheetName)}`;
+      const r = await fetch(url);
+      const json = await r.json();
+      if (json.status === 'ok') return json;
+    } catch(e) {
+      console.warn('Apps Script read falló, intentando gviz:', sheetName, e);
+    }
+  }
+  // Fallback: gviz (requiere hoja pública)
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
   try {
     const r = await fetch(url);
